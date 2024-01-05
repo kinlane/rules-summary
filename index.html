@@ -1,0 +1,114 @@
+---
+layout: page
+width: expand
+---
+<div class="uk-section">
+    <div class="uk-container uk-container-xlarge">
+
+        <h1 class="uk-article-title">Rules Summary</h1>
+        <p>I am using an open source rules playground for applying rules to Artifact. I like the way the tool shows coverage on the artifact it is being applied to. However, the export file is a little verbose and I need a way to summarize the results.</p>
+        <h2>Rules Input</h2> 
+        <input type="text" id="format" style="width: 100%;"> 
+        <textarea style="width: 100%; height: 250px; border: 5px solid #000;" id="rules-input" onchange="updateArtifact();"></textarea>   
+        <h2>Rules Summary</h2> 
+        <textarea style="width: 100%; height: 250px; border: 5px solid #000;" id="rules-summary" onchange="updateArtifact();"></textarea>                      
+        <div id="summary"></div>
+        <script>
+            function saveArtifact(artifact){
+                var format = document.getElementById('format').value;
+                if(format=='json'){
+                    document.getElementById('rules-input').value = JSON.stringify(artifact, null, 2); 
+                }
+                if(format=='yaml'){
+                    document.getElementById('rules-input').value = jsyaml.dump(artifact); 
+                }                
+            }
+
+            function parseArtifact(){
+                var artifact = document.getElementById('rules-input').value;
+
+                var is_yaml = 0;
+                var is_json = 0;
+
+                try {
+                    var artifact = jsyaml.load(artifact);
+                    console.log(artifact);
+                    is_yaml = 1;
+                    is_json = 0;
+                } catch (error) {
+                    console.log(error);
+                }
+                try {
+                    var artifact = JSON.parse(artifact);
+                    is_json = 1;
+                    is_yaml = 0;
+                } catch (error) {}
+
+                if(is_json==1){
+                    document.getElementById("format").value = "json";
+                }
+                else{
+                    document.getElementById("format").value = "yaml";  
+                }
+                return artifact;                
+            }
+           
+            function updateArtifact(){
+
+                var artifact = parseArtifact();
+                //console.log(artifact)
+
+                var summary = {};
+
+                var html = '';
+                if(artifact.rules){
+                    var rule_counter = 1;
+                    for (let i = 0; i < artifact.rules.length; i++) {
+
+                        var message = artifact.rules[i].message;
+                        var severity = artifact.rules[i].severity;
+                        var code = artifact.rules[i].code;
+
+                        if(!summary[code]){ 
+                            summary[code] = {};
+                            summary[code].message = message;
+                            summary[code].errors = 0;
+                            summary[code].warn = 0;
+                            summary[code].info = 0;
+                            summary[code].hints = 0;
+                        }
+                        if(severity == 0){
+                            summary[code].errors = summary[code].errors + 1;
+                        } 
+                        if(severity == 1){
+                            summary[code].warn = summary[code].warn + 1;
+                        } 
+                        if(severity == 2){
+                            summary[code].info = summary[code].info + 1;
+                        } 
+                        if(severity == 3){
+                            summary[code].hints = summary[code].hints + 1;
+                        }                                                                             
+
+                    }
+                }
+
+                var html = '<table width="100%">';
+                for (const [rule, counts] of Object.entries(summary)) {
+                    html += '<tr>';
+                    html += '<td style="width: 60%;">' + counts.message + ' (' + rule + ')</td>';
+                    html += '<td style="width: 10%; text-align: center;">' + counts.errors + '</td>';
+                    html += '<td style="width: 10%; text-align: center;">' + counts.warn  + '</td>';
+                    html += '<td style="width: 10%; text-align: center;">' + counts.info  + '</td>';
+                    html += '<td style="width: 10%; text-align: center;">' + counts.hints  + '</td>';
+                    html += '</tr>';
+                }
+                html += '</table>';
+
+                document.getElementById('summary').innerHTML = html;
+                document.getElementById('rules-summary').innerHTML = '---\r\n' + jsyaml.dump(summary) + '---';
+
+            }
+        </script>
+    </div>
+</div>
