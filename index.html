@@ -56,18 +56,18 @@ width: expand
             function updateArtifact(){
 
                 var artifact = parseArtifact();
-                //console.log(artifact)
+                console.log(artifact)
 
                 var summary = {};
 
                 var html = '';
-                if(artifact.rules){
+                if(artifact){
                     var rule_counter = 1;
-                    for (let i = 0; i < artifact.rules.length; i++) {
+                    for (let i = 0; i < artifact.length; i++) {
 
-                        var message = artifact.rules[i].message;
-                        var severity = artifact.rules[i].severity;
-                        var code = artifact.rules[i].code;
+                        var message = artifact[i].message;
+                        var severity = artifact[i].severity;
+                        var code = artifact[i].code;
 
                         if(!summary[code]){ 
                             summary[code] = {};
@@ -92,6 +92,8 @@ width: expand
 
                     }
                 }
+
+                console.log(summary);
 
                 var html = '<table width="100%">';
                 for (const [rule, counts] of Object.entries(summary)) {
